@@ -123,7 +123,7 @@ rcl_get_zero_initialized_service(void);
  * \param[out] service preallocated service structure
  * \param[in] node valid rcl node handle
  * \param[in] type_support type support object for the topic's type
- * \param[in] topic_name the name of the topic
+ * \param[in] service_name the name of the topic
  * \param[in] options service options, including quality of service settings
  * \return RCL_RET_OK if service was initialized successfully, or
  *         RCL_RET_INVALID_ARGUMENT if any arugments are invalid, or
@@ -137,7 +137,7 @@ rcl_service_init(
   rcl_service_t * service,
   const rcl_node_t * node,
   const rosidl_message_type_support_t * type_support,
-  const char * topic_name,
+  const char * service_name,
   const rcl_service_options_t * options);
 
 /// Deinitialize a rcl_service_t.
@@ -213,11 +213,10 @@ rcl_service_get_default_options(void);
 RCL_PUBLIC
 RCL_WARN_UNUSED
 rcl_ret_t
-rcl_handle_request(
+rcl_take_request(
   const rcl_service_t * service,
   void * ros_request,
   void * ros_response);
-
 
 // TODO comment
 RCL_PUBLIC
@@ -225,8 +224,8 @@ RCL_WARN_UNUSED
 rcl_ret_t
 rcl_send_response(
   const rcl_service_t * service,
-  void * ros_response,
-  rmw_req_id_t req_id);
+  void * request_header,
+  void * ros_response);
 
 /// Get the topic name for the service.
 /* This function returns the service's internal topic name string.
@@ -246,7 +245,7 @@ rcl_send_response(
 RCL_PUBLIC
 RCL_WARN_UNUSED
 const char *
-rcl_service_get_topic_name(const rcl_service_t * service);
+rcl_service_get_service_name(const rcl_service_t * service);
 
 /// Return the rcl service options.
 /* This function returns the service's internal options struct.

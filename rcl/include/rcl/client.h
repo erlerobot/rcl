@@ -120,7 +120,7 @@ rcl_get_zero_initialized_publisher(void);
  * \param[inout] publisher preallocated publisher structure
  * \param[in] node valid rcl node handle
  * \param[in] type_support type support object for the topic's type
- * \param[in] topic_name the name of the topic to publish on
+ * \param[in] service_name the name of the topic to publish on
  * \param[in] options publisher options, including quality of service settings
  * \return RCL_RET_OK if the publisher was initialized successfully, or
  *         RCL_RET_NODE_INVALID if the node is invalid, or
@@ -136,7 +136,7 @@ rcl_client_init(
   rcl_client_t * client,
   const rcl_node_t * node,
   const rosidl_message_type_support_t * type_support,
-  const char * topic_name,
+  const char * service_name,
   const rcl_client_options_t * options);
 
 // TODO Redo this comment for clients
@@ -214,14 +214,14 @@ rcl_client_get_default_options(void);
 RCL_PUBLIC
 RCL_WARN_UNUSED
 rcl_ret_t
-rcl_send_request(const rcl_client_t * client, const void * ros_request, int64_t sequence_number);
+rcl_send_request(const rcl_client_t * client, const void * ros_request);
 
 
 // TODO Comment
 RCL_PUBLIC
 RCL_WARN_UNUSED
 rcl_ret_t
-rcl_handle_response(const rcl_client_t * client, const void * ros_response);
+rcl_take_response(const rcl_client_t * client, void * request_header, void * ros_response);
 
 // TODO Redo comment
 /// Get the topic name for the publisher.
@@ -242,7 +242,7 @@ rcl_handle_response(const rcl_client_t * client, const void * ros_response);
 RCL_PUBLIC
 RCL_WARN_UNUSED
 const char *
-rcl_client_get_topic_name(const rcl_client_t * client);
+rcl_client_get_service_name(const rcl_client_t * client);
 
 /// Return the rcl publisher options.
 /* This function returns the publisher's internal options struct.
