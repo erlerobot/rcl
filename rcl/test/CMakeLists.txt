@@ -1,4 +1,5 @@
 find_package(ament_cmake_gtest REQUIRED)
+find_package(sensor_msgs REQUIRED)
 find_package(std_msgs REQUIRED)
 
 include(rcl_add_custom_gtest.cmake)
