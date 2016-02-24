@@ -20,7 +20,7 @@ extern "C"
 {
 #endif
 
-#include "rosidl_generator_c/message_type_support.h"
+#include "rosidl_generator_c/service_type_support.h"
 
 #include "rcl/macros.h"
 #include "rcl/node.h"
@@ -35,7 +35,7 @@ typedef struct rcl_client_t
   struct rcl_client_impl_t * impl;
 } rcl_client_t;
 
-/// Options available for a rcl publisher.
+/// Options available for a rcl client.
 typedef struct rcl_client_options_t
 {
   /// Middleware quality of service settings for the client.
@@ -47,14 +47,14 @@ typedef struct rcl_client_options_t
 
 /// Return a rcl_client_t struct with members set to NULL.
 /* Should be called to get a null rcl_client_t before passing to
- * rcl_initalize_publisher().
+ * rcl_initalize_client().
  * It's also possible to use calloc() instead of this if the rcl_client is
  * being allocated on the heap.
  */
 RCL_PUBLIC
 RCL_WARN_UNUSED
 rcl_client_t
-rcl_get_zero_initialized_publisher(void);
+rcl_get_zero_initialized_client(void);
 
 
 // TODO Rewrite this comment for clients
@@ -93,7 +93,7 @@ rcl_get_zero_initialized_publisher(void);
  *
  * The options struct allows the user to set the quality of service settings as
  * well as a custom allocator which is used when initializing/finalizing the
- * publisher to allocate space for incidentals, e.g. the topic name string.
+ * client to allocate space for incidentals, e.g. the topic name string.
  *
  * Expected usage (for C messages):
  *
@@ -106,25 +106,25 @@ rcl_get_zero_initialized_publisher(void);
  *    rcl_ret_t ret = rcl_node_init(&node, "node_name", &node_ops);
  *    // ... error handling
  *    rosidl_message_type_support_t * ts = ROSIDL_GET_MESSAGE_TYPE_SUPPORT(std_msgs, String);
- *    rcl_client_t publisher = rcl_get_zero_initialized_publisher();
- *    rcl_client_options_t publisher_ops = rcl_client_get_default_options();
- *    ret = rcl_client_init(&publisher, &node, ts, "chatter", &publisher_ops);
+ *    rcl_client_t client = rcl_get_zero_initialized_client();
+ *    rcl_client_options_t client_ops = rcl_client_get_default_options();
+ *    ret = rcl_client_init(&client, &node, ts, "chatter", &client_ops);
  *    // ... error handling, and on shutdown do finalization:
- *    ret = rcl_client_fini(&publisher, &node);
+ *    ret = rcl_client_fini(&client, &node);
  *    // ... error handling for rcl_client_fini()
  *    ret = rcl_node_fini(&node);
  *    // ... error handling for rcl_deinitialize_node()
  *
  * This function is not thread-safe.
  *
- * \param[inout] publisher preallocated publisher structure
+ * \param[inout] client preallocated client structure
  * \param[in] node valid rcl node handle
  * \param[in] type_support type support object for the topic's type
  * \param[in] service_name the name of the topic to publish on
- * \param[in] options publisher options, including quality of service settings
- * \return RCL_RET_OK if the publisher was initialized successfully, or
+ * \param[in] options client options, including quality of service settings
+ * \return RCL_RET_OK if the client was initialized successfully, or
  *         RCL_RET_NODE_INVALID if the node is invalid, or
- *         RCL_RET_ALREADY_INIT if the publisher is already initialized, or
+ *         RCL_RET_ALREADY_INIT if the client is already initialized, or
  *         RCL_RET_INVALID_ARGUMENT if any arguments are invalid, or
  *         RCL_RET_BAD_ALLOC if allocating memory fails, or
  *         RCL_RET_ERROR if an unspecified error occurs.
@@ -135,23 +135,23 @@ rcl_ret_t
 rcl_client_init(
   rcl_client_t * client,
   const rcl_node_t * node,
-  const rosidl_message_type_support_t * type_support,
+  const rosidl_service_type_support_t * type_support,
   const char * service_name,
   const rcl_client_options_t * options);
 
 // TODO Redo this comment for clients
 /// Finalize a rcl_client_t.
 /* After calling, the node will no longer be advertising that it is publishing
- * on this topic (assuming this is the only publisher on this topic).
+ * on this topic (assuming this is the only client on this topic).
  *
- * After calling, calls to rcl_publish will fail when using this publisher.
+ * After calling, calls to rcl_publish will fail when using this client.
  * However, the given node handle is still valid.
  *
  * This function is not thread-safe.
  *
- * \param[inout] publisher handle to the publisher to be finalized
- * \param[in] node handle to the node used to create the publisher
- * \return RCL_RET_OK if publisher was finalized successfully, or
+ * \param[inout] client handle to the client to be finalized
+ * \param[in] node handle to the node used to create the client
+ * \return RCL_RET_OK if client was finalized successfully, or
  *         RCL_RET_INVALID_ARGUMENT if any arguments are invalid, or
  *         RCL_RET_ERROR if an unspecified error occurs.
  */
@@ -169,7 +169,7 @@ rcl_client_get_default_options(void);
 // TODO Redo  this comment
 /// Send a ROS request using a client.
 /* It is the job of the caller to ensure that the type of the ros_message
- * parameter and the type associate with the publisher (via the type support)
+ * parameter and the type associate with the client (via the type support)
  * match.
  * Passing a different type to publish produces undefined behavior and cannot
  * be checked by this function and therefore no deliberate error will occur.
@@ -183,7 +183,7 @@ rcl_client_get_default_options(void);
  * serializing the message, collecting publish statistics, etc.
  * The last thing it will do is call the underlying middleware's publish
  * function which may or may not block based on the quality of service settings
- * given via the publisher options in rcl_client_init().
+ * given via the client options in rcl_client_init().
  * For example, if the reliability is set to reliable, then a publish may block
  * until space in the publish queue is available, but if the reliability is set
  * to best effort then it should not block.
@@ -191,24 +191,24 @@ rcl_client_get_default_options(void);
  * The ROS message given by the ros_message void pointer is always owned by the
  * calling code, but should remain constant during publish.
  *
- * This function is thread safe so long as access to both the publisher and the
+ * This function is thread safe so long as access to both the client and the
  * ros_message is synchronized.
  * That means that calling rcl_publish from multiple threads is allowed, but
- * calling rcl_publish at the same time as non-thread safe publisher functions
+ * calling rcl_publish at the same time as non-thread safe client functions
  * is not, e.g. calling rcl_publish and rcl_client_fini concurrently
  * is not allowed.
  * Before calling rcl_publish the message can change and after calling
  * rcl_publish the message can change, but it cannot be changed during the
  * publish call.
  * The same ros_message, however, can be passed to multiple calls of
- * rcl_publish simultaneously, even if the publishers differ.
+ * rcl_publish simultaneously, even if the clients differ.
  * The ros_message is unmodified by rcl_publish.
  *
- * \param[in] publisher handle to the publisher which will do the publishing
+ * \param[in] client handle to the client which will do the publishing
  * \param[in] ros_message type-erased pointer to the ROS message
  * \return RCL_RET_OK if the message was published successfully, or
  *         RCL_RET_INVALID_ARGUMENT if any arguments are invalid, or
- *         RCL_RET_CLIENT_INVALID if the publisher is invalid, or
+ *         RCL_RET_CLIENT_INVALID if the client is invalid, or
  *         RCL_RET_ERROR if an unspecified error occurs.
  */
 RCL_PUBLIC
@@ -224,11 +224,11 @@ rcl_ret_t
 rcl_take_response(const rcl_client_t * client, void * request_header, void * ros_response);
 
 // TODO Redo comment
-/// Get the topic name for the publisher.
-/* This function returns the publisher's internal topic name string.
+/// Get the topic name for the client.
+/* This function returns the client's internal topic name string.
  * This function can fail, and therefore return NULL, if the:
- *   - publisher is NULL
- *   - publisher is invalid (never called init, called fini, or invalid node)
+ *   - client is NULL
+ *   - client is invalid (never called init, called fini, or invalid node)
  *
  * The returned string is only valid as long as the rcl_client_t is valid.
  * The value of the string may change if the topic name changes, and therefore
@@ -236,7 +236,7 @@ rcl_take_response(const rcl_client_t * client, void * request_header, void * ros
  *
  * This function is not thread-safe, and copying the result is not thread-safe.
  *
- * \param[in] publisher pointer to the publisher
+ * \param[in] client pointer to the client
  * \return name string if successful, otherwise NULL
  */
 RCL_PUBLIC
@@ -244,19 +244,19 @@ RCL_WARN_UNUSED
 const char *
 rcl_client_get_service_name(const rcl_client_t * client);
 
-/// Return the rcl publisher options.
-/* This function returns the publisher's internal options struct.
+/// Return the rcl client options.
+/* This function returns the client's internal options struct.
  * This function can fail, and therefore return NULL, if the:
- *   - publisher is NULL
- *   - publisher is invalid (never called init, called fini, or invalid node)
+ *   - client is NULL
+ *   - client is invalid (never called init, called fini, or invalid node)
  *
  * The returned struct is only valid as long as the rcl_client_t is valid.
- * The values in the struct may change if the options of the publisher change,
+ * The values in the struct may change if the options of the client change,
  * and therefore copying the struct is recommended if this is a concern.
  *
  * This function is not thread-safe, and copying the result is not thread-safe.
  *
- * \param[in] publisher pointer to the publisher
+ * \param[in] client pointer to the client
  * \return options struct if successful, otherwise NULL
  */
 RCL_PUBLIC
@@ -264,26 +264,26 @@ RCL_WARN_UNUSED
 const rcl_client_options_t *
 rcl_client_get_options(const rcl_client_t * client);
 
-/// Return the rmw publisher handle.
+/// Return the rmw client handle.
 /* The handle returned is a pointer to the internally held rmw handle.
  * This function can fail, and therefore return NULL, if the:
- *   - publisher is NULL
- *   - publisher is invalid (never called init, called fini, or invalid node)
+ *   - client is NULL
+ *   - client is invalid (never called init, called fini, or invalid node)
  *
- * The returned handle is made invalid if the publisher is finalized or if
+ * The returned handle is made invalid if the client is finalized or if
  * rcl_shutdown() is called.
  * The returned handle is not guaranteed to be valid for the life time of the
- * publisher as it may be finalized and recreated itself.
- * Therefore it is recommended to get the handle from the publisher using
+ * client as it may be finalized and recreated itself.
+ * Therefore it is recommended to get the handle from the client using
  * this function each time it is needed and avoid use of the handle
  * concurrently with functions that might change it.
  *
- * \param[in] publisher pointer to the rcl publisher
- * \return rmw publisher handle if successful, otherwise NULL
+ * \param[in] client pointer to the rcl client
+ * \return rmw client handle if successful, otherwise NULL
  */
 RCL_PUBLIC
 RCL_WARN_UNUSED
-rmw_publisher_t *
+rmw_client_t *
 rcl_client_get_rmw_handle(const rcl_client_t * client);
 
 #if __cplusplus

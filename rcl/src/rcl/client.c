@@ -24,12 +24,6 @@ extern "C"
 #include "./common.h"
 #include "rmw/rmw.h"
 
-// TODO Determine how to allocate callback storage, how to set limit, etc.
-// Callback type
-/*
-request, response pair (void*s)
-*/
-
 typedef struct rcl_client_impl_t
 {
   rcl_client_options_t options;
@@ -49,7 +43,7 @@ rcl_ret_t
 rcl_client_init(
   rcl_client_t * client,
   const rcl_node_t * node,
-  const rosidl_message_type_support_t * type_support,
+  const rosidl_service_type_support_t * type_support,
   const char * service_name,
   const rcl_client_options_t * options)
 {
@@ -181,7 +175,7 @@ rcl_send_request(const rcl_client_t * client, const void * ros_request)
 RCL_PUBLIC
 RCL_WARN_UNUSED
 rcl_ret_t
-rcl_take_response(const rcl_client_t * client, void * request_header, void * ros_response);
+rcl_take_response(const rcl_client_t * client, void * request_header, void * ros_response)
 {
   RCL_CHECK_ARGUMENT_FOR_NULL(client, RCL_RET_INVALID_ARGUMENT);
   RCL_CHECK_FOR_NULL_WITH_MSG(
