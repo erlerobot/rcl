@@ -18,7 +18,8 @@
 
 #include "rcl/rcl.h"
 
-#include "sensor_msgs/set_camera_info.h"
+#include "sensor_msgs/srv/set_camera_info.h"
+#include "rosidl_generator_c/string_functions.h"
 
 #include "../memory_tools/memory_tools.hpp"
 #include "../scope_exit.hpp"
@@ -80,8 +81,10 @@ TEST_F(TestClientFixture, test_client_nominal) {
   //  Process     : test_subscription__rmw_opensplice_cpp <23524>
   //  Thread      : main thread 7fff7342d000
   //  Internals   : V6.4.140407OSS///v_topicNew/v_topic.c/448/21/1455157023.781423000
-  const char * topic_name = "add_two_ints";
+  const char * topic_name = "set_camera_info";
   rcl_client_options_t client_options = rcl_client_get_default_options();
+
+  const rosidl_service_type_support_t * ts = ROSIDL_GET_TYPE_SUPPORT(sensor_msgs, srv, SetCameraInfo);
   ret = rcl_client_init(&client, this->node_ptr, ts, topic_name, &client_options);
   ASSERT_EQ(RCL_RET_OK, ret) << rcl_get_error_string_safe();
   auto client_exit = make_scope_exit([&client, this]() {
@@ -89,11 +92,14 @@ TEST_F(TestClientFixture, test_client_nominal) {
     rcl_ret_t ret = rcl_client_fini(&client, this->node_ptr);
     EXPECT_EQ(RCL_RET_OK, ret) << rcl_get_error_string_safe();
   });
-  sensor_msgs__srv__SetCameraInfo__request req;
-  sensor_msgs__srv__SetCameraInfo__request(&req);
-  msg.data = 42;
-  ret = rcl_send_request(&client, &req, 0);
-  sensor_msgs__srv__SetCameraInfo__request__fini(&req);
+  sensor_msgs__srv__SetCameraInfo_Request req;
+  sensor_msgs__srv__SetCameraInfo_Request__init(&req);
+  req.camera_info.height = 42;
+  req.camera_info.width = 42;
+  rosidl_generator_c__String__assignn(&req.camera_info.distortion_model, "gain", 4);
+
+  ret = rcl_send_request(&client, &req);
+  sensor_msgs__srv__SetCameraInfo_Request__fini(&req);
   ASSERT_EQ(RCL_RET_OK, ret) << rcl_get_error_string_safe();
 }
 
@@ -105,7 +111,8 @@ TEST_F(TestClientFixture, test_client_init_fini) {
   rcl_ret_t ret;
   // Setup valid inputs.
   rcl_client_t client;
-  const rosidl_message_type_support_t * ts = ROSIDL_GET_TYPE_SUPPORT(std_msgs, msg, Int64);
+
+  const rosidl_service_type_support_t * ts = ROSIDL_GET_TYPE_SUPPORT(sensor_msgs, srv, SetCameraInfo);
   const char * topic_name = "chatter";
   rcl_client_options_t default_client_options = rcl_client_get_default_options();
 

@@ -45,7 +45,7 @@ function(test_target_function)
     ENV ${extra_test_env}
     APPEND_LIBRARY_DIRS ${extra_lib_dirs}
     LIBRARIES ${PROJECT_NAME}${target_suffix} ${extra_test_libraries}
-    AMENT_DEPENDENCIES ${rmw_implementation}
+    AMENT_DEPENDENCIES ${rmw_implementation} sensor_msgs
   )
 
   rcl_add_custom_gtest(test_time${target_suffix}
