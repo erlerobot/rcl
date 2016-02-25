@@ -24,10 +24,24 @@ function(test_target_function)
     return()
   endif()
 
+  # TODO arrr
+  if("${rmw_implementation} " STREQUAL "rmw_opensplice_cpp ")
+    message(STATUS "Skipping tests for '${rmw_implementation}'")
+    return()
+  endif()
+
   message(STATUS "Creating tests for '${rmw_implementation}'")
 
   rcl_add_custom_gtest(test_allocator${target_suffix}
     SRCS rcl/test_allocator.cpp
+    ENV ${extra_test_env}
+    APPEND_LIBRARY_DIRS ${extra_lib_dirs}
+    LIBRARIES ${PROJECT_NAME}${target_suffix} ${extra_test_libraries}
+    AMENT_DEPENDENCIES ${rmw_implementation}
+  )
+
+  rcl_add_custom_gtest(test_client${target_suffix}
+    SRCS rcl/test_client.cpp
     ENV ${extra_test_env}
     APPEND_LIBRARY_DIRS ${extra_lib_dirs}
     LIBRARIES ${PROJECT_NAME}${target_suffix} ${extra_test_libraries}

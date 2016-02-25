@@ -190,7 +190,7 @@ rcl_take_response(const rcl_client_t * client, void * request_header, void * ros
   }
   if (!taken) {
     RCL_SET_ERROR_MSG(rmw_get_error_string_safe());
-    return RCL_CLIENT_TAKE_FAILED;
+    return RCL_RET_CLIENT_TAKE_FAILED;
   }
   return RCL_RET_OK;
 }
