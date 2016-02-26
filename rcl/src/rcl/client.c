@@ -163,7 +163,8 @@ rcl_send_request(const rcl_client_t * client, const void * ros_request)
     client->impl, "client is invalid", return RCL_RET_INVALID_ARGUMENT);
   // what TODO about that sequence number
   // pending_requests state?
-  if (rmw_send_request(client->impl->rmw_handle, ros_request, &client->impl->sequence_number) != RMW_RET_OK) {
+  if (rmw_send_request(client->impl->rmw_handle, ros_request, &(client->impl->sequence_number)) != RMW_RET_OK) {
+    printf("%s\n", rmw_get_error_string_safe());
     RCL_SET_ERROR_MSG(rmw_get_error_string_safe());
     return RCL_RET_ERROR;
   }

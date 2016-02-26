@@ -70,17 +70,7 @@ TEST_F(TestClientFixture, test_client_nominal) {
   stop_memory_checking();
   rcl_ret_t ret;
   rcl_client_t client = rcl_get_zero_initialized_client();
-  //const rosidl_message_type_support_t * ts = ROSIDL_GET_TYPE_SUPPORT(rcl, srv, AddTwoInts);
-  // TODO(wjwwood): Change this back to just chatter when this OpenSplice problem is resolved:
-  //  ========================================================================================
-  //  Report      : WARNING
-  //  Date        : Wed Feb 10 18:17:03 PST 2016
-  //  Description : Create Topic "chatter" failed: typename <std_msgs::msg::dds_::Int64_>
-  //                differs exiting definition <std_msgs::msg::dds_::String_>.
-  //  Node        : farl
-  //  Process     : test_subscription__rmw_opensplice_cpp <23524>
-  //  Thread      : main thread 7fff7342d000
-  //  Internals   : V6.4.140407OSS///v_topicNew/v_topic.c/448/21/1455157023.781423000
+
   const char * topic_name = "set_camera_info";
   rcl_client_options_t client_options = rcl_client_get_default_options();
 
@@ -96,11 +86,11 @@ TEST_F(TestClientFixture, test_client_nominal) {
   sensor_msgs__srv__SetCameraInfo_Request__init(&req);
   req.camera_info.height = 42;
   req.camera_info.width = 42;
-  rosidl_generator_c__String__assignn(&req.camera_info.distortion_model, "gain", 4);
+  rosidl_generator_c__String__assign(&req.camera_info.distortion_model, "gain");
 
   ret = rcl_send_request(&client, &req);
+  EXPECT_EQ(RCL_RET_OK, ret) << rcl_get_error_string_safe();
   sensor_msgs__srv__SetCameraInfo_Request__fini(&req);
-  ASSERT_EQ(RCL_RET_OK, ret) << rcl_get_error_string_safe();
 }
 
 
