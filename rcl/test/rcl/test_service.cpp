@@ -172,7 +172,10 @@ TEST_F(TestServiceFixture, test_service_nominal) {
     ret = rcl_take_request(&service, &header, &service_request);
     ASSERT_EQ(RCL_RET_OK, ret) << rcl_get_error_string_safe();
 
-    EXPECT_EQ(3, service_response.sum);
+    EXPECT_EQ(1, service_request.a);
+    EXPECT_EQ(2, service_request.b);
+    // Simulate a callback
+    service_response.sum = service_request.a + service_request.b;
     ret = rcl_send_response(&service, &header, &service_response);
     ASSERT_EQ(RCL_RET_OK, ret) << rcl_get_error_string_safe();
   }
