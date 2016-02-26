@@ -22,7 +22,7 @@
 
 #include "rcl/rcl.h"
 
-#include "example_interfaces/add_two_ints.h"
+#include "example_interfaces/srv/add_two_ints.h"
 
 #include "../memory_tools/memory_tools.hpp"
 #include "../scope_exit.hpp"
@@ -76,7 +76,7 @@ wait_for_service_to_be_ready(
   bool & success)
 {
   rcl_wait_set_t wait_set = rcl_get_zero_initialized_wait_set();
-  rcl_ret_t ret = rcl_wait_set_init(&wait_set, 1, 0, 0, rcl_get_default_allocator());
+  rcl_ret_t ret = rcl_wait_set_init(&wait_set, 0, 0, 0, 0, 1, rcl_get_default_allocator());
   ASSERT_EQ(RCL_RET_OK, ret) << rcl_get_error_string_safe();
   auto wait_set_exit = make_scope_exit([&wait_set]() {
     stop_memory_checking();
@@ -86,6 +86,8 @@ wait_for_service_to_be_ready(
   size_t iteration = 0;
   do {
     ++iteration;
+    // TODO implement these wait set functions
+    // for client and service?
     ret = rcl_wait_set_clear_services(&wait_set);
     ASSERT_EQ(RCL_RET_OK, ret) << rcl_get_error_string_safe();
     ret = rcl_wait_set_add_service(&wait_set, service);
@@ -111,7 +113,7 @@ TEST_F(TestServiceFixture, test_service_nominal) {
   stop_memory_checking();
   rcl_ret_t ret;
   rcl_client_t client = rcl_get_zero_initialized_client();
-  const rosidl_message_type_support_t * ts = ROSIDL_GET_TYPE_SUPPORT(example_interfaces, srv, AddTwoInts);
+  const rosidl_service_type_support_t * ts = ROSIDL_GET_TYPE_SUPPORT(example_interfaces, srv, AddTwoInts);
   // TODO(wjwwood): Change this back to just chatter when this OpenSplice problem is resolved:
   //  ========================================================================================
   //  Report      : WARNING
@@ -144,12 +146,12 @@ TEST_F(TestServiceFixture, test_service_nominal) {
   //                probably using the count_services busy wait mechanism
   //                until then we will sleep for a short period of time
   std::this_thread::sleep_for(std::chrono::milliseconds(1000));
-  example_interfaces__srv__AddTwoInts__request client_request;
-  example_interfaces__srv__AddTwoInts__request__init(&client_request);
-  msg.a = 1;
-  msg.b = 2;
-  ret = rcl_send_request(&client, &client_request, 0);
-  example_interfaces__srv__AddTwoInts__request__fini(&client_request);
+  example_interfaces__srv__AddTwoInts_Request client_request;
+  example_interfaces__srv__AddTwoInts_Request__init(&client_request);
+  client_request.a = 1;
+  client_request.b = 2;
+  ret = rcl_send_request(&client, &client_request);
+  example_interfaces__srv__AddTwoInts_Request__fini(&client_request);
   ASSERT_EQ(RCL_RET_OK, ret) << rcl_get_error_string_safe();
 
   bool success;
@@ -157,29 +159,31 @@ TEST_F(TestServiceFixture, test_service_nominal) {
   ASSERT_TRUE(success);
   // consider putting this in a function for an independent scope
   {
-    example_interfaces__srv__AddTwoInts__response service_response;
-    example_interfaces__srv__AddTwoInts__response__init(&service_response);
-    auto msg_exit = make_scope_exit([&msg]() {
+    example_interfaces__srv__AddTwoInts_Response service_response;
+    example_interfaces__srv__AddTwoInts_Response__init(&service_response);
+    auto msg_exit = make_scope_exit([&service_response]() {
       stop_memory_checking();
-      example_interfaces__srv__AddTwoInts__response__fini(&service_response);
+      example_interfaces__srv__AddTwoInts_Response__fini(&service_response);
     });
-    bool taken = false;
 
-    example_interfaces__srv__AddTwoInts__request service_request;
-    example_interfaces__srv__AddTwoInts__request__init(&service_request);
-    ret = rcl_handle_request(&service, &msg, service_request, service_response);
+    example_interfaces__srv__AddTwoInts_Request service_request;
+    example_interfaces__srv__AddTwoInts_Request__init(&service_request);
+    rmw_request_id_t header;
+    ret = rcl_take_request(&service, &header, &service_request);
     ASSERT_EQ(RCL_RET_OK, ret) << rcl_get_error_string_safe();
 
-    EXPECT_EQ(3, msg.sum);
-    ret = rcl_send_response(&service, &msg, service_response);
+    EXPECT_EQ(3, service_response.sum);
+    ret = rcl_send_response(&service, &header, &service_response);
     ASSERT_EQ(RCL_RET_OK, ret) << rcl_get_error_string_safe();
   }
 
   // TODO wait for client
-  example_interfaces__srv__AddTwoInts__response client_response;
-  example_interfaces__srv__AddTwoInts__response__init(&client_response);
+  example_interfaces__srv__AddTwoInts_Response client_response;
+  example_interfaces__srv__AddTwoInts_Response__init(&client_response);
 
-  ret = rcl_handle_response(client, &client_response);
+  rmw_request_id_t header;
+  ret = rcl_take_response(&client, &header, &client_response);
   ASSERT_EQ(RCL_RET_OK, ret) << rcl_get_error_string_safe();
   EXPECT_EQ(client_response.sum, 3);
+  EXPECT_EQ(header.sequence_number, 1);
 }

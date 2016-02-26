@@ -76,7 +76,7 @@ wait_for_subscription_to_be_ready(
   bool & success)
 {
   rcl_wait_set_t wait_set = rcl_get_zero_initialized_wait_set();
-  rcl_ret_t ret = rcl_wait_set_init(&wait_set, 1, 0, 0, rcl_get_default_allocator());
+  rcl_ret_t ret = rcl_wait_set_init(&wait_set, 1, 0, 0, 0, 0, rcl_get_default_allocator());
   ASSERT_EQ(RCL_RET_OK, ret) << rcl_get_error_string_safe();
   auto wait_set_exit = make_scope_exit([&wait_set]() {
     stop_memory_checking();

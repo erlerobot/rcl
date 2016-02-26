@@ -92,7 +92,7 @@ function(test_target_function)
   )
 
   rcl_add_custom_gtest(test_service${target_suffix}
-    SRCS rcl/test_client.cpp
+    SRCS rcl/test_service.cpp
     ENV ${extra_test_env}
     APPEND_LIBRARY_DIRS ${extra_lib_dirs}
     LIBRARIES ${PROJECT_NAME}${target_suffix} ${extra_test_libraries}

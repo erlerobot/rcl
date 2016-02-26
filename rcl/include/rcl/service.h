@@ -1,4 +1,4 @@
-// Copyright 2015 Open Source Robotics Foundation, Inc.
+// Copyright 2016 Open Source Robotics Foundation, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -20,7 +20,7 @@ extern "C"
 {
 #endif
 
-#include "rosidl_generator_c/message_type_support.h"
+#include "rosidl_generator_c/service_type_support.h"
 
 #include "rcl/macros.h"
 #include "rcl/node.h"
@@ -67,26 +67,26 @@ rcl_get_zero_initialized_service(void);
  * The given rcl_node_t must be valid and the resulting rcl_service_t is
  * only valid as long as the given rcl_node_t remains valid.
  *
- * The rosidl_message_type_support_t is obtained on a per .msg type basis.
+ * The rosidl_service_type_support_t is obtained on a per .msg type basis.
  * When the user defines a ROS message, code is generated which provides the
- * required rosidl_message_type_support_t object.
+ * required rosidl_service_type_support_t object.
  * This object can be obtained using a language appropriate mechanism.
  * \TODO(wjwwood) probably should talk about this once and link to it instead
  * For C this macro can be used (using std_msgs/String as an example):
  *
- *    #include <rosidl_generator_c/message_type_support.h>
+ *    #include <rosidl_generator_c/service_type_support.h>
  *    #include <std_msgs/msgs/string.h>
- *    rosidl_message_type_support_t * string_ts =
+ *    rosidl_service_type_support_t * string_ts =
  *      ROSIDL_GET_MESSAGE_TYPE_SUPPORT(std_msgs, String);
  *
  * For C++ a template function is used:
  *
- *    #include <rosidl_generator_cpp/message_type_support.hpp>
+ *    #include <rosidl_generator_cpp/service_type_support.hpp>
  *    #include <std_msgs/msgs/string.hpp>
- *    rosidl_message_type_support_t * string_ts =
- *      rosidl_generator_cpp::get_message_type_support_handle<std_msgs::msg::String>();
+ *    rosidl_service_type_support_t * string_ts =
+ *      rosidl_generator_cpp::get_service_type_support_handle<std_msgs::msg::String>();
  *
- * The rosidl_message_type_support_t object contains message type specific
+ * The rosidl_service_type_support_t object contains message type specific
  * information used to publish messages.
  *
  * \TODO(wjwwood) update this once we've come up with an official scheme.
@@ -101,14 +101,14 @@ rcl_get_zero_initialized_service(void);
  * Expected usage (for C messages):
  *
  *    #include <rcl/rcl.h>
- *    #include <rosidl_generator_c/message_type_support.h>
+ *    #include <rosidl_generator_c/service_type_support.h>
  *    #include <std_msgs/msgs/string.h>
  *
  *    rcl_node_t node = rcl_get_zero_initialized_node();
  *    rcl_node_options_t node_ops = rcl_node_get_default_options();
  *    rcl_ret_t ret = rcl_node_init(&node, "node_name", &node_ops);
  *    // ... error handling
- *    rosidl_message_type_support_t * ts = ROSIDL_GET_MESSAGE_TYPE_SUPPORT(std_msgs, String);
+ *    rosidl_service_type_support_t * ts = ROSIDL_GET_MESSAGE_TYPE_SUPPORT(std_msgs, String);
  *    rcl_service_t service = rcl_get_zero_initialized_service();
  *    rcl_service_options_t service_ops = rcl_service_get_default_options();
  *    ret = rcl_service_init(&service, &node, ts, "chatter", &service_ops);
@@ -136,7 +136,7 @@ rcl_ret_t
 rcl_service_init(
   rcl_service_t * service,
   const rcl_node_t * node,
-  const rosidl_message_type_support_t * type_support,
+  const rosidl_service_type_support_t * type_support,
   const char * service_name,
   const rcl_service_options_t * options);
 
@@ -215,8 +215,8 @@ RCL_WARN_UNUSED
 rcl_ret_t
 rcl_take_request(
   const rcl_service_t * service,
-  void * ros_request,
-  void * ros_response);
+  void * request_header,
+  void * ros_request);
 
 // TODO comment
 RCL_PUBLIC
