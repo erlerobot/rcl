@@ -137,6 +137,7 @@ TEST_F(TestServiceFixture, test_service_nominal) {
   rcl_service_options_t service_options = rcl_service_get_default_options();
   ret = rcl_service_init(&service, this->node_ptr, ts, topic, &service_options);
   ASSERT_EQ(RCL_RET_OK, ret) << rcl_get_error_string_safe();
+  EXPECT_EQ(strcmp(rcl_service_get_service_name(&service), topic), 0);
   auto service_exit = make_scope_exit([&service, this]() {
     stop_memory_checking();
     rcl_ret_t ret = rcl_service_fini(&service, this->node_ptr);

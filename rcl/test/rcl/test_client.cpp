@@ -78,6 +78,8 @@ TEST_F(TestClientFixture, test_client_nominal) {
   const rosidl_service_type_support_t * ts = ROSIDL_GET_TYPE_SUPPORT(example_interfaces, srv, AddTwoInts);
   ret = rcl_client_init(&client, this->node_ptr, ts, topic_name, &client_options);
   ASSERT_EQ(RCL_RET_OK, ret) << rcl_get_error_string_safe();
+  EXPECT_EQ(strcmp(rcl_client_get_service_name(&client), topic_name), 0);
+
   auto client_exit = make_scope_exit([&client, this]() {
     stop_memory_checking();
     rcl_ret_t ret = rcl_client_fini(&client, this->node_ptr);
