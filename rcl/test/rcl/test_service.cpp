@@ -22,7 +22,7 @@
 
 #include "rcl/rcl.h"
 
-#include "sensor_msgs/set_camera_info.h"
+#include "example_interfaces/add_two_ints.h"
 
 #include "../memory_tools/memory_tools.hpp"
 #include "../scope_exit.hpp"
@@ -111,7 +111,7 @@ TEST_F(TestServiceFixture, test_service_nominal) {
   stop_memory_checking();
   rcl_ret_t ret;
   rcl_client_t client = rcl_get_zero_initialized_client();
-  const rosidl_message_type_support_t * ts = ROSIDL_GET_TYPE_SUPPORT(sensor_msgs, srv, SetCameraInfo);
+  const rosidl_message_type_support_t * ts = ROSIDL_GET_TYPE_SUPPORT(example_interfaces, srv, AddTwoInts);
   // TODO(wjwwood): Change this back to just chatter when this OpenSplice problem is resolved:
   //  ========================================================================================
   //  Report      : WARNING
@@ -144,11 +144,12 @@ TEST_F(TestServiceFixture, test_service_nominal) {
   //                probably using the count_services busy wait mechanism
   //                until then we will sleep for a short period of time
   std::this_thread::sleep_for(std::chrono::milliseconds(1000));
-  sensor_msgs__srv__SetCameraInfo__request client_request;
-  sensor_msgs__srv__SetCameraInfo__request__init(&client_request);
-  msg.data = 42;
+  example_interfaces__srv__AddTwoInts__request client_request;
+  example_interfaces__srv__AddTwoInts__request__init(&client_request);
+  msg.a = 1;
+  msg.b = 2;
   ret = rcl_send_request(&client, &client_request, 0);
-  sensor_msgs__srv__SetCameraInfo__request__fini(&client_request);
+  example_interfaces__srv__AddTwoInts__request__fini(&client_request);
   ASSERT_EQ(RCL_RET_OK, ret) << rcl_get_error_string_safe();
 
   bool success;
@@ -156,28 +157,29 @@ TEST_F(TestServiceFixture, test_service_nominal) {
   ASSERT_TRUE(success);
   // consider putting this in a function for an independent scope
   {
-    sensor_msgs__srv__SetCameraInfo__response service_response;
-    sensor_msgs__srv__SetCameraInfo__response__init(&service_response);
+    example_interfaces__srv__AddTwoInts__response service_response;
+    example_interfaces__srv__AddTwoInts__response__init(&service_response);
     auto msg_exit = make_scope_exit([&msg]() {
       stop_memory_checking();
-      sensor_msgs__srv__SetCameraInfo__response__fini(&service_response);
+      example_interfaces__srv__AddTwoInts__response__fini(&service_response);
     });
     bool taken = false;
 
-    sensor_msgs__srv__SetCameraInfo__request service_request;
-    sensor_msgs__srv__SetCameraInfo__request__init(&service_request);
+    example_interfaces__srv__AddTwoInts__request service_request;
+    example_interfaces__srv__AddTwoInts__request__init(&service_request);
     ret = rcl_handle_request(&service, &msg, service_request, service_response);
     ASSERT_EQ(RCL_RET_OK, ret) << rcl_get_error_string_safe();
 
-    // TODO expectations
-    ASSERT_EQ(42, msg.data);
+    EXPECT_EQ(3, msg.sum);
     ret = rcl_send_response(&service, &msg, service_response);
+    ASSERT_EQ(RCL_RET_OK, ret) << rcl_get_error_string_safe();
   }
 
   // TODO wait for client
-  sensor_msgs__srv__SetCameraInfo__response client_response;
-  sensor_msgs__srv__SetCameraInfo__response__init(&client_response);
+  example_interfaces__srv__AddTwoInts__response client_response;
+  example_interfaces__srv__AddTwoInts__response__init(&client_response);
 
-  rcl_handle_response(client, &client_response);
-  // TODO expectations
+  ret = rcl_handle_response(client, &client_response);
+  ASSERT_EQ(RCL_RET_OK, ret) << rcl_get_error_string_safe();
+  EXPECT_EQ(client_response.sum, 3);
 }

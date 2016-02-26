@@ -1,4 +1,4 @@
-// Copyright 2015 Open Source Robotics Foundation, Inc.
+// Copyright 2016 Open Source Robotics Foundation, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -18,7 +18,7 @@
 
 #include "rcl/rcl.h"
 
-#include "sensor_msgs/srv/set_camera_info.h"
+#include "example_interfaces/srv/add_two_ints.h"
 #include "rosidl_generator_c/string_functions.h"
 
 #include "../memory_tools/memory_tools.hpp"
@@ -68,13 +68,14 @@ public:
  */
 TEST_F(TestClientFixture, test_client_nominal) {
   stop_memory_checking();
+  // TODO start_memory_checking at some point
   rcl_ret_t ret;
   rcl_client_t client = rcl_get_zero_initialized_client();
 
-  const char * topic_name = "set_camera_info";
+  const char * topic_name = "add_two_ints";
   rcl_client_options_t client_options = rcl_client_get_default_options();
 
-  const rosidl_service_type_support_t * ts = ROSIDL_GET_TYPE_SUPPORT(sensor_msgs, srv, SetCameraInfo);
+  const rosidl_service_type_support_t * ts = ROSIDL_GET_TYPE_SUPPORT(example_interfaces, srv, AddTwoInts);
   ret = rcl_client_init(&client, this->node_ptr, ts, topic_name, &client_options);
   ASSERT_EQ(RCL_RET_OK, ret) << rcl_get_error_string_safe();
   auto client_exit = make_scope_exit([&client, this]() {
@@ -82,15 +83,14 @@ TEST_F(TestClientFixture, test_client_nominal) {
     rcl_ret_t ret = rcl_client_fini(&client, this->node_ptr);
     EXPECT_EQ(RCL_RET_OK, ret) << rcl_get_error_string_safe();
   });
-  sensor_msgs__srv__SetCameraInfo_Request req;
-  sensor_msgs__srv__SetCameraInfo_Request__init(&req);
-  req.camera_info.height = 42;
-  req.camera_info.width = 42;
-  rosidl_generator_c__String__assign(&req.camera_info.distortion_model, "gain");
+  example_interfaces__srv__AddTwoInts_Request req;
+  example_interfaces__srv__AddTwoInts_Request__init(&req);
+  req.a = 1;
+  req.b = 2;
 
   ret = rcl_send_request(&client, &req);
   EXPECT_EQ(RCL_RET_OK, ret) << rcl_get_error_string_safe();
-  sensor_msgs__srv__SetCameraInfo_Request__fini(&req);
+  example_interfaces__srv__AddTwoInts_Request__fini(&req);
 }
 
 
@@ -102,7 +102,7 @@ TEST_F(TestClientFixture, test_client_init_fini) {
   // Setup valid inputs.
   rcl_client_t client;
 
-  const rosidl_service_type_support_t * ts = ROSIDL_GET_TYPE_SUPPORT(sensor_msgs, srv, SetCameraInfo);
+  const rosidl_service_type_support_t * ts = ROSIDL_GET_TYPE_SUPPORT(example_interfaces, srv, AddTwoInts);
   const char * topic_name = "chatter";
   rcl_client_options_t default_client_options = rcl_client_get_default_options();
 

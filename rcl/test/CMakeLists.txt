@@ -1,5 +1,5 @@
 find_package(ament_cmake_gtest REQUIRED)
-find_package(sensor_msgs REQUIRED)
+find_package(example_interfaces REQUIRED)
 find_package(std_msgs REQUIRED)
 
 include(rcl_add_custom_gtest.cmake)
@@ -45,7 +45,7 @@ function(test_target_function)
     ENV ${extra_test_env}
     APPEND_LIBRARY_DIRS ${extra_lib_dirs}
     LIBRARIES ${PROJECT_NAME}${target_suffix} ${extra_test_libraries}
-    AMENT_DEPENDENCIES ${rmw_implementation} "sensor_msgs"
+    AMENT_DEPENDENCIES ${rmw_implementation} "example_interfaces"
   )
 
   rcl_add_custom_gtest(test_time${target_suffix}
@@ -89,6 +89,14 @@ function(test_target_function)
     APPEND_LIBRARY_DIRS ${extra_lib_dirs}
     LIBRARIES ${PROJECT_NAME}${target_suffix} ${extra_test_libraries}
     AMENT_DEPENDENCIES ${rmw_implementation} "std_msgs"
+  )
+
+  rcl_add_custom_gtest(test_service${target_suffix}
+    SRCS rcl/test_client.cpp
+    ENV ${extra_test_env}
+    APPEND_LIBRARY_DIRS ${extra_lib_dirs}
+    LIBRARIES ${PROJECT_NAME}${target_suffix} ${extra_test_libraries}
+    AMENT_DEPENDENCIES ${rmw_implementation} "example_interfaces"
   )
 
   rcl_add_custom_gtest(test_subscription${target_suffix}
