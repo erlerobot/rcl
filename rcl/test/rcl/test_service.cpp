@@ -126,6 +126,8 @@ TEST_F(TestServiceFixture, test_service_nominal) {
   rcl_service_options_t service_options = rcl_service_get_default_options();
   ret = rcl_service_init(&service, this->node_ptr, ts, topic, &service_options);
   ASSERT_EQ(RCL_RET_OK, ret) << rcl_get_error_string_safe();
+
+  // Check that the service name matches what we assigned.
   EXPECT_EQ(strcmp(rcl_service_get_service_name(&service), topic), 0);
   auto service_exit = make_scope_exit([&service, this]() {
     stop_memory_checking();
@@ -136,6 +138,8 @@ TEST_F(TestServiceFixture, test_service_nominal) {
   //                probably using the count_services busy wait mechanism
   //                until then we will sleep for a short period of time
   std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+
+  // Initialize a request.
   example_interfaces__srv__AddTwoInts_Request client_request;
   example_interfaces__srv__AddTwoInts_Request__init(&client_request);
   client_request.a = 1;
@@ -147,8 +151,11 @@ TEST_F(TestServiceFixture, test_service_nominal) {
   bool success;
   wait_for_service_to_be_ready(&service, 10, 100, success);
   ASSERT_TRUE(success);
-  // consider putting this in a function for an independent scope
+
+  // This scope simulates the service responding in a different context so that we can
+  // test take_request/send_response in a single-threaded, deterministic execution.
   {
+    // Initialize a response.
     example_interfaces__srv__AddTwoInts_Response service_response;
     example_interfaces__srv__AddTwoInts_Response__init(&service_response);
     auto msg_exit = make_scope_exit([&service_response]() {
@@ -156,6 +163,7 @@ TEST_F(TestServiceFixture, test_service_nominal) {
       example_interfaces__srv__AddTwoInts_Response__fini(&service_response);
     });
 
+    // Initialize a separate instance of the request and take the pending request.
     example_interfaces__srv__AddTwoInts_Request service_request;
     example_interfaces__srv__AddTwoInts_Request__init(&service_request);
     rmw_request_id_t header;
@@ -164,13 +172,13 @@ TEST_F(TestServiceFixture, test_service_nominal) {
 
     EXPECT_EQ(1, service_request.a);
     EXPECT_EQ(2, service_request.b);
-    // Simulate a callback
+    // Simulate a response callback by summing the request and send the response..
     service_response.sum = service_request.a + service_request.b;
     ret = rcl_send_response(&service, &header, &service_response);
     ASSERT_EQ(RCL_RET_OK, ret) << rcl_get_error_string_safe();
   }
 
-  // TODO wait for client
+  // Initialize the response owned by the client and take the response.
   example_interfaces__srv__AddTwoInts_Response client_response;
   example_interfaces__srv__AddTwoInts_Response__init(&client_response);
 
