@@ -28,8 +28,6 @@ typedef struct rcl_service_impl_t
 {
   rcl_service_options_t options;
   rmw_service_t * rmw_handle;
-  // TODO Atomic?
-  int64_t sequence_number;
 } rcl_service_impl_t;
 
 rcl_service_t
@@ -162,7 +160,9 @@ rcl_take_request(const rcl_service_t * service, void * request_header, void * ro
   RCL_CHECK_ARGUMENT_FOR_NULL(ros_request, RCL_RET_INVALID_ARGUMENT);
 
   bool taken = false;
-  if (rmw_take_request(service->impl->rmw_handle, request_header, ros_request, &taken) != RMW_RET_OK) {
+  if (rmw_take_request(
+      service->impl->rmw_handle, request_header, ros_request, &taken) != RMW_RET_OK)
+  {
     RCL_SET_ERROR_MSG(rmw_get_error_string_safe());
     return RCL_RET_ERROR;
   }
@@ -182,11 +182,12 @@ rcl_send_response(const rcl_service_t * service, void * request_header, void * r
   RCL_CHECK_ARGUMENT_FOR_NULL(request_header, RCL_RET_INVALID_ARGUMENT);
   RCL_CHECK_ARGUMENT_FOR_NULL(ros_response, RCL_RET_INVALID_ARGUMENT);
 
-  if (rmw_send_response(service->impl->rmw_handle, request_header, ros_response) != RMW_RET_OK) {
+  if (rmw_send_response(
+      service->impl->rmw_handle, request_header, ros_response) != RMW_RET_OK)
+  {
     RCL_SET_ERROR_MSG(rmw_get_error_string_safe());
     return RCL_RET_ERROR;
   }
 
   return RCL_RET_OK;
 }
-

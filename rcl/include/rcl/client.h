@@ -57,35 +57,37 @@ rcl_client_t
 rcl_get_zero_initialized_client(void);
 
 
-// TODO Rewrite this comment for clients
 /// Initialize a rcl client.
-/* After calling this function on a rcl_client_t, it can be used to publish
- * messages of the given type to the given topic using rcl_publish().
+/* After calling this function on a rcl_client_t, it can be used to send requests of the given
+ * type by calling rcl_send_request().
+ * Once a response has been sent by the service, the response is available to the client when
+ * rcl_take_response() is called.
  *
  * The given rcl_node_t must be valid and the resulting rcl_client_t is only
  * valid as long as the given rcl_node_t remains valid.
  *
- * The rosidl_message_type_support_t is obtained on a per .msg type basis.
- * When the user defines a ROS message, code is generated which provides the
- * required rosidl_message_type_support_t object.
+ * The rosidl_service_type_support_t is obtained on a per .srv type basis.
+ * When the user defines a ROS service, code is generated which provides the
+ * required rosidl_service_type_support_t object.
  * This object can be obtained using a language appropriate mechanism.
  * \TODO(wjwwood) probably should talk about this once and link to it instead
+ * \TODO(jacquelinekay) reworded this for services with substitutions, should it refer to messages?
  * For C this macro can be used (using std_msgs/String as an example):
  *
- *    #include <rosidl_generator_c/message_type_support.h>
- *    #include <std_msgs/msgs/string.h>
- *    rosidl_message_type_support_t * string_ts =
- *      ROSIDL_GET_MESSAGE_TYPE_SUPPORT(std_msgs, String);
+ *    #include <rosidl_generator_c/service_type_support.h>
+ *    #include <example_interfaces/srv/add_two_ints.h>
+ *    rosidl_service_type_support_t * ts =
+ *      ROSIDL_GET_SERVICE_TYPE_SUPPORT(example_interfaces, AddTwoInts);
  *
  * For C++ a template function is used:
  *
- *    #include <rosidl_generator_cpp/message_type_support.hpp>
- *    #include <std_msgs/msgs/string.hpp>
- *    rosidl_message_type_support_t * string_ts =
- *      rosidl_generator_cpp::get_message_type_support_handle<std_msgs::msg::String>();
+ *    #include <rosidl_generator_cpp/service_type_support.hpp>
+ *    #include <example_interfaces/srv/add_two_ints.h>
+ *    rosidl_service_type_support_t * ts = rosidl_generator_cpp::get_service_type_support_handle<
+ *      example_interfaces::srv::AddTwoInts>();
  *
- * The rosidl_message_type_support_t object contains message type specific
- * information used to publish messages.
+ * The rosidl_service_type_support_t object contains service type specific
+ * information used to send or take requests and responses.
  *
  * \TODO(wjwwood) update this once we've come up with an official scheme.
  * The topic name must be a non-empty string which follows the topic naming
@@ -93,19 +95,20 @@ rcl_get_zero_initialized_client(void);
  *
  * The options struct allows the user to set the quality of service settings as
  * well as a custom allocator which is used when initializing/finalizing the
- * client to allocate space for incidentals, e.g. the topic name string.
+ * client to allocate space for incidentals, e.g. the service name string.
  *
- * Expected usage (for C messages):
+ * Expected usage (for C services):
  *
  *    #include <rcl/rcl.h>
- *    #include <rosidl_generator_c/message_type_support.h>
- *    #include <std_msgs/msgs/string.h>
+ *    #include <rosidl_generator_c/service_type_support.h>
+ *    #include <example_interfaces/srv/add_two_ints.h>
  *
  *    rcl_node_t node = rcl_get_zero_initialized_node();
  *    rcl_node_options_t node_ops = rcl_node_get_default_options();
  *    rcl_ret_t ret = rcl_node_init(&node, "node_name", &node_ops);
  *    // ... error handling
- *    rosidl_message_type_support_t * ts = ROSIDL_GET_MESSAGE_TYPE_SUPPORT(std_msgs, String);
+ *    rosidl_service_type_support_t * ts = ROSIDL_GET_MESSAGE_TYPE_SUPPORT(
+ *      example_interfaces, AddTwoInts);
  *    rcl_client_t client = rcl_get_zero_initialized_client();
  *    rcl_client_options_t client_ops = rcl_client_get_default_options();
  *    ret = rcl_client_init(&client, &node, ts, "chatter", &client_ops);
@@ -120,7 +123,7 @@ rcl_get_zero_initialized_client(void);
  * \param[inout] client preallocated client structure
  * \param[in] node valid rcl node handle
  * \param[in] type_support type support object for the topic's type
- * \param[in] service_name the name of the topic to publish on
+ * \param[in] service_name the name of the service to request
  * \param[in] options client options, including quality of service settings
  * \return RCL_RET_OK if the client was initialized successfully, or
  *         RCL_RET_NODE_INVALID if the node is invalid, or
@@ -139,7 +142,6 @@ rcl_client_init(
   const char * service_name,
   const rcl_client_options_t * options);
 
-// TODO Redo this comment for clients
 /// Finalize a rcl_client_t.
 /* After calling, the node will no longer be advertising that it is publishing
  * on this topic (assuming this is the only client on this topic).
@@ -166,47 +168,35 @@ RCL_WARN_UNUSED
 rcl_client_options_t
 rcl_client_get_default_options(void);
 
-// TODO Redo  this comment
 /// Send a ROS request using a client.
-/* It is the job of the caller to ensure that the type of the ros_message
+/* It is the job of the caller to ensure that the type of the ros_request
  * parameter and the type associate with the client (via the type support)
  * match.
- * Passing a different type to publish produces undefined behavior and cannot
+ * Passing a different type to send_request produces undefined behavior and cannot
  * be checked by this function and therefore no deliberate error will occur.
  *
- * TODO(wjwwood): update after researching what the blocking behavior is
- *                or optionally link to a document that describes blocking
- *                behavior is more detail.
- * Calling rcl_publish is a potentially blocking call.
- * When called rcl_publish will immediately do any publishing related work,
- * including, but not limited to, converting the message into a different type,
- * serializing the message, collecting publish statistics, etc.
- * The last thing it will do is call the underlying middleware's publish
- * function which may or may not block based on the quality of service settings
- * given via the client options in rcl_client_init().
- * For example, if the reliability is set to reliable, then a publish may block
- * until space in the publish queue is available, but if the reliability is set
- * to best effort then it should not block.
+ * send_request is an non-blocking call. 
  *
- * The ROS message given by the ros_message void pointer is always owned by the
+ * The ROS request message given by the ros_request void pointer is always owned by the
  * calling code, but should remain constant during publish.
  *
+ * TODO: Is this true for send_request?
  * This function is thread safe so long as access to both the client and the
- * ros_message is synchronized.
- * That means that calling rcl_publish from multiple threads is allowed, but
- * calling rcl_publish at the same time as non-thread safe client functions
- * is not, e.g. calling rcl_publish and rcl_client_fini concurrently
+ * ros_request is synchronized.
+ * That means that calling rcl_send_request from multiple threads is allowed, but
+ * calling rcl_send_request at the same time as non-thread safe client functions
+ * is not, e.g. calling rcl_send_request and rcl_client_fini concurrently
  * is not allowed.
- * Before calling rcl_publish the message can change and after calling
- * rcl_publish the message can change, but it cannot be changed during the
+ * Before calling rcl_send_request the message can change and after calling
+ * rcl_send_request the message can change, but it cannot be changed during the
  * publish call.
- * The same ros_message, however, can be passed to multiple calls of
- * rcl_publish simultaneously, even if the clients differ.
- * The ros_message is unmodified by rcl_publish.
+ * The same ros_request, however, can be passed to multiple calls of
+ * rcl_send_request simultaneously, even if the clients differ.
+ * The ros_request is unmodified by rcl_send_request.
  *
- * \param[in] client handle to the client which will do the publishing
- * \param[in] ros_message type-erased pointer to the ROS message
- * \return RCL_RET_OK if the message was published successfully, or
+ * \param[in] client handle to the client which will make the response
+ * \param[in] ros_request type-erased pointer to the ROS request message
+ * \return RCL_RET_OK if the request was sent successfully, or
  *         RCL_RET_INVALID_ARGUMENT if any arguments are invalid, or
  *         RCL_RET_CLIENT_INVALID if the client is invalid, or
  *         RCL_RET_ERROR if an unspecified error occurs.
@@ -217,15 +207,32 @@ rcl_ret_t
 rcl_send_request(const rcl_client_t * client, const void * ros_request);
 
 
-// TODO Comment
+// Take a ROS response using a client
+/* It is the job of the caller to ensure that the type of the ros_response
+ * parameter and the type associate with the client (via the type support)
+ * match.
+ * Passing a different type to take_response produces undefined behavior and cannot
+ * be checked by this function and therefore no deliberate error will occur.
+ * The request_header is an rmw struct for meta-information about the request sent
+ * (e.g. the sequence number).
+ * ros_response should point to an already allocated ROS response message struct of the
+ * correct type, into which the response from the service will be copied.
+ *
+ * \param[in] client handle to the client which will take the response
+ * \param[inout] request_header type-erased pointer to the request header
+ * \param[inout] ros_response type-erased pointer to the ROS response message
+ * \return RCL_RET_OK if the response was taken successfully, or
+ *         RCL_RET_INVALID_ARGUMENT if any arguments are invalid, or
+ *         RCL_RET_CLIENT_INVALID if the client is invalid, or
+ *         RCL_RET_ERROR if an unspecified error occurs.
+ */
 RCL_PUBLIC
 RCL_WARN_UNUSED
 rcl_ret_t
 rcl_take_response(const rcl_client_t * client, void * request_header, void * ros_response);
 
-// TODO Redo comment
-/// Get the topic name for the client.
-/* This function returns the client's internal topic name string.
+/// Get the name of the service that this client will request a response from.
+/* This function returns the client's internal service name string.
  * This function can fail, and therefore return NULL, if the:
  *   - client is NULL
  *   - client is invalid (never called init, called fini, or invalid node)

@@ -47,8 +47,6 @@ typedef struct rcl_service_options_t
   rcl_allocator_t allocator;
 } rcl_service_options_t;
 
-// TODO Redo comments
-
 /// Return a rcl_service_t struct with members set to NULL.
 /* Should be called to get a null rcl_service_t before passing to
  * rcl_initalize_service().
@@ -62,68 +60,68 @@ rcl_get_zero_initialized_service(void);
 
 /// Initialize a ROS service.
 /* After calling this function on a rcl_service_t, it can be used to take
- * messages of the given type to the given topic using rcl_take().
+ * requests of the given type to the given topic using rcl_take_request().
+ * It can also send a response to a request using rcl_send_response().
  *
  * The given rcl_node_t must be valid and the resulting rcl_service_t is
  * only valid as long as the given rcl_node_t remains valid.
  *
- * The rosidl_service_type_support_t is obtained on a per .msg type basis.
- * When the user defines a ROS message, code is generated which provides the
+ * The rosidl_service_type_support_t is obtained on a per .srv type basis.
+ * When the user defines a ROS service, code is generated which provides the
  * required rosidl_service_type_support_t object.
  * This object can be obtained using a language appropriate mechanism.
  * \TODO(wjwwood) probably should talk about this once and link to it instead
+ * \TODO(jacquelinekay) reworded this for services with substitutions, should it refer to messages?
  * For C this macro can be used (using std_msgs/String as an example):
  *
  *    #include <rosidl_generator_c/service_type_support.h>
- *    #include <std_msgs/msgs/string.h>
- *    rosidl_service_type_support_t * string_ts =
- *      ROSIDL_GET_MESSAGE_TYPE_SUPPORT(std_msgs, String);
+ *    #include <example_interfaces/srv/add_two_ints.h>
+ *    rosidl_service_type_support_t * ts =
+ *      ROSIDL_GET_SERVICE_TYPE_SUPPORT(example_interfaces, AddTwoInts);
  *
  * For C++ a template function is used:
  *
  *    #include <rosidl_generator_cpp/service_type_support.hpp>
- *    #include <std_msgs/msgs/string.hpp>
- *    rosidl_service_type_support_t * string_ts =
- *      rosidl_generator_cpp::get_service_type_support_handle<std_msgs::msg::String>();
+ *    #include <example_interfaces/srv/add_two_ints.h>
+ *    rosidl_service_type_support_t * ts = rosidl_generator_cpp::get_service_type_support_handle<
+ *      example_interfaces::srv::AddTwoInts>();
  *
- * The rosidl_service_type_support_t object contains message type specific
- * information used to publish messages.
+ * The rosidl_service_type_support_t object contains service type specific
+ * information used to send or take requests and responses.
  *
  * \TODO(wjwwood) update this once we've come up with an official scheme.
  * The topic name must be a non-empty string which follows the topic naming
  * format.
  *
  * The options struct allows the user to set the quality of service settings as
- * well as a custom allocator which is used when (de)initializing the
- * service to allocate space for incidental things, e.g. the topic
- * name string.
+ * well as a custom allocator which is used when initializing/finalizing the
+ * client to allocate space for incidentals, e.g. the service name string.
  *
- * Expected usage (for C messages):
+ * Expected usage (for C services):
  *
  *    #include <rcl/rcl.h>
  *    #include <rosidl_generator_c/service_type_support.h>
- *    #include <std_msgs/msgs/string.h>
+ *    #include <example_interfaces/srv/add_two_ints.h>
  *
  *    rcl_node_t node = rcl_get_zero_initialized_node();
  *    rcl_node_options_t node_ops = rcl_node_get_default_options();
  *    rcl_ret_t ret = rcl_node_init(&node, "node_name", &node_ops);
  *    // ... error handling
- *    rosidl_service_type_support_t * ts = ROSIDL_GET_MESSAGE_TYPE_SUPPORT(std_msgs, String);
+ *    rosidl_service_type_support_t * ts = ROSIDL_GET_MESSAGE_TYPE_SUPPORT(
+ *      example_interfaces, AddTwoInts);
  *    rcl_service_t service = rcl_get_zero_initialized_service();
  *    rcl_service_options_t service_ops = rcl_service_get_default_options();
  *    ret = rcl_service_init(&service, &node, ts, "chatter", &service_ops);
- *    // ... error handling, and when finished deinitialization
+ *    // ... error handling, and on shutdown do finalization:
  *    ret = rcl_service_fini(&service, &node);
  *    // ... error handling for rcl_service_fini()
  *    ret = rcl_node_fini(&node);
  *    // ... error handling for rcl_deinitialize_node()
  *
- * This function is not thread-safe.
- *
  * \param[out] service preallocated service structure
  * \param[in] node valid rcl node handle
  * \param[in] type_support type support object for the topic's type
- * \param[in] service_name the name of the topic
+ * \param[in] service_name the name of the service
  * \param[in] options service options, including quality of service settings
  * \return RCL_RET_OK if service was initialized successfully, or
  *         RCL_RET_INVALID_ARGUMENT if any arugments are invalid, or
@@ -144,9 +142,9 @@ rcl_service_init(
 /* After calling, the node will no longer be subscribed on this topic
  * (assuming this is the only service on this topic in this node).
  *
- * After calling, calls to rcl_wait and rcl_take will fail when using this
- * service.
- * Additioanlly rcl_wait will be interrupted if currently blocking.
+ * After calling, calls to rcl_wait, rcl_take_request, and rcl_send_request will fail when using
+ * this service.
+ * Additionally rcl_wait will be interrupted if currently blocking.
  * However, the given node handle is still valid.
  *
  * This function is not thread-safe.
@@ -168,8 +166,8 @@ RCL_WARN_UNUSED
 rcl_service_options_t
 rcl_service_get_default_options(void);
 
-/// Take a ROS message from a topic using a rcl service.
-/* It is the job of the caller to ensure that the type of the ros_message
+/// Take a pending ROS request using a rcl service.
+/* It is the job of the caller to ensure that the type of the ros_request
  * argument and the type associate with the service, via the type
  * support, match.
  * Passing a different type to rcl_take produces undefined behavior and cannot
@@ -180,31 +178,22 @@ rcl_service_get_default_options(void);
  * TODO(wjwwood) is rcl_take thread-safe?
  * TODO(wjwwood) Should there be an rcl_message_info_t?
  *
- * The ros_message pointer should point to an already allocated ROS message
- * struct of the correct type, into which the taken ROS message will be copied
+ * The ros_request pointer should point to an already allocated ROS request message
+ * struct of the correct type, into which the taken ROS request will be copied
  * if one is available.
- * If taken is false after calling, then the ROS message will be unmodified.
+ * If taken is false after calling, then the ROS request will be unmodified.
  *
- * If allocation is required when taking the message, e.g. if space needs to
+ * If allocation is required when taking the request, e.g. if space needs to
  * be allocated for a dynamically sized array in the target message, then the
  * allocator given in the service options is used.
  *
- * The taken pointer should point to an already allocated boolean in which the
- * result can be stored.
- *
- * The rmw message_info struct contains meta information about this particular
- * message instance, like what the GUID of the publisher which published it
- * originally or whether or not the message received from within the same
- * process.
- * The message_info argument should be an already allocated rmw_message_info_t
- * structure.
- * Passing NULL for message_info will result in the argument being ignored.
+ * The request_header is a type-erased pointer to pre-allocated a rmw struct containing
+ * meta-information about the request (e.g. the sequence number).
  *
  * \param[in] service the handle to the service from which to take
- * \param[inout] ros_message type-erased ptr to a allocated ROS message
- * \param[out] taken pointer to a bool, if set to false a message was not taken
- * \param[out] message_info rmw struct which contains meta-data for the message
- * \return RCL_RET_OK if the message was published, or
+ * \param[inout] request_header type-erased ptr to a request header
+ * \param[inout] ros_request type-erased ptr to an allocated ROS request message
+ * \return RCL_RET_OK if the request was taken, or
  *         RCL_RET_INVALID_ARGUMENT if any arugments are invalid, or
  *         RCL_RET_SERVICE_INVALID if the service is invalid, or
  *         RCL_RET_BAD_ALLOC if allocating memory failed, or
@@ -218,7 +207,39 @@ rcl_take_request(
   void * request_header,
   void * ros_request);
 
-// TODO comment
+/// Send a ROS response to a client using a service.
+/* It is the job of the caller to ensure that the type of the ros_response
+ * parameter and the type associate with the service (via the type support)
+ * match.
+ * Passing a different type to send_response produces undefined behavior and cannot
+ * be checked by this function and therefore no deliberate error will occur.
+ *
+ * send_response is an non-blocking call. 
+ *
+ * The ROS response message given by the ros_response void pointer is always owned by the
+ * calling code, but should remain constant during send_response.
+ *
+ * TODO: Is this still true?
+ * This function is thread safe so long as access to both the service and the
+ * ros_response is synchronized.
+ * That means that calling rcl_send_response from multiple threads is allowed, but
+ * calling rcl_send_response at the same time as non-thread safe service functions
+ * is not, e.g. calling rcl_send_response and rcl_service_fini concurrently
+ * is not allowed.
+ * Before calling rcl_send_response the message can change and after calling
+ * rcl_send_response the message can change, but it cannot be changed during the
+ * send_response call.
+ * The same ros_response, however, can be passed to multiple calls of
+ * rcl_send_response simultaneously, even if the services differ.
+ * The ros_response is unmodified by rcl_send_response.
+ *
+ * \param[in] service handle to the service which will make the response
+ * \param[in] ros_response type-erased pointer to the ROS response message
+ * \return RCL_RET_OK if the response was sent successfully, or
+ *         RCL_RET_INVALID_ARGUMENT if any arguments are invalid, or
+ *         RCL_RET_CLIENT_INVALID if the service is invalid, or
+ *         RCL_RET_ERROR if an unspecified error occurs.
+ */
 RCL_PUBLIC
 RCL_WARN_UNUSED
 rcl_ret_t

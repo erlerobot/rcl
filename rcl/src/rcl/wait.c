@@ -144,7 +144,9 @@ rcl_wait_set_init(
   fixed_guard_conditions.guard_conditions = NULL;
   fixed_guard_conditions.guard_condition_count = 0;
   wait_set->impl->rmw_waitset = rmw_create_waitset(
-    &fixed_guard_conditions, 2 * number_of_subscriptions + number_of_guard_conditions + number_of_clients + number_of_services);
+    &fixed_guard_conditions,
+    2 * number_of_subscriptions + number_of_guard_conditions + number_of_clients +
+    number_of_services);
   if (!wait_set->impl->rmw_waitset) {
     goto fail;
   }
@@ -492,15 +494,11 @@ rcl_wait(rcl_wait_set_t * wait_set, int64_t timeout)
     return RCL_RET_WAIT_SET_INVALID;
   }
   if (wait_set->size_of_subscriptions == 0 && wait_set->size_of_guard_conditions == 0 &&
-      wait_set->size_of_clients == 0 && wait_set->size_of_services == 0)
+    wait_set->size_of_clients == 0 && wait_set->size_of_services == 0)
   {
     RCL_SET_ERROR_MSG("wait set is empty");
     return RCL_RET_WAIT_SET_EMPTY;
   }
-  // Create dummy sets for currently unsupported wait-ables.
-  // TODO Fill in dummy_services and dummy_clients with real rmw_handles
-  //static rmw_services_t dummy_services = {0, NULL};
-  //static rmw_clients_t dummy_clients = {0, NULL};
   // Calculate the timeout argument.
   rmw_time_t * timeout_argument;
   rmw_time_t temporary_timeout_storage;

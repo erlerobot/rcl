@@ -68,14 +68,14 @@ public:
  */
 TEST_F(TestClientFixture, test_client_nominal) {
   stop_memory_checking();
-  // TODO start_memory_checking at some point
   rcl_ret_t ret;
   rcl_client_t client = rcl_get_zero_initialized_client();
 
   const char * topic_name = "add_two_ints";
   rcl_client_options_t client_options = rcl_client_get_default_options();
 
-  const rosidl_service_type_support_t * ts = ROSIDL_GET_TYPE_SUPPORT(example_interfaces, srv, AddTwoInts);
+  const rosidl_service_type_support_t * ts = ROSIDL_GET_TYPE_SUPPORT(
+    example_interfaces, srv, AddTwoInts);
   ret = rcl_client_init(&client, this->node_ptr, ts, topic_name, &client_options);
   ASSERT_EQ(RCL_RET_OK, ret) << rcl_get_error_string_safe();
   EXPECT_EQ(strcmp(rcl_client_get_service_name(&client), topic_name), 0);
@@ -104,7 +104,8 @@ TEST_F(TestClientFixture, test_client_init_fini) {
   // Setup valid inputs.
   rcl_client_t client;
 
-  const rosidl_service_type_support_t * ts = ROSIDL_GET_TYPE_SUPPORT(example_interfaces, srv, AddTwoInts);
+  const rosidl_service_type_support_t * ts = ROSIDL_GET_TYPE_SUPPORT(
+    example_interfaces, srv, AddTwoInts);
   const char * topic_name = "chatter";
   rcl_client_options_t default_client_options = rcl_client_get_default_options();
 

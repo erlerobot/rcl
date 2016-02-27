@@ -67,7 +67,6 @@ public:
   }
 };
 
-// TODO ??? Will this work?
 void
 wait_for_service_to_be_ready(
   rcl_service_t * service,
@@ -86,8 +85,6 @@ wait_for_service_to_be_ready(
   size_t iteration = 0;
   do {
     ++iteration;
-    // TODO implement these wait set functions
-    // for client and service?
     ret = rcl_wait_set_clear_services(&wait_set);
     ASSERT_EQ(RCL_RET_OK, ret) << rcl_get_error_string_safe();
     ret = rcl_wait_set_add_service(&wait_set, service);
@@ -113,17 +110,9 @@ TEST_F(TestServiceFixture, test_service_nominal) {
   stop_memory_checking();
   rcl_ret_t ret;
   rcl_client_t client = rcl_get_zero_initialized_client();
-  const rosidl_service_type_support_t * ts = ROSIDL_GET_TYPE_SUPPORT(example_interfaces, srv, AddTwoInts);
-  // TODO(wjwwood): Change this back to just chatter when this OpenSplice problem is resolved:
-  //  ========================================================================================
-  //  Report      : WARNING
-  //  Date        : Wed Feb 10 18:17:03 PST 2016
-  //  Description : Create Topic "chatter" failed: typename <std_msgs::msg::dds_::Int64_>
-  //                differs exiting definition <std_msgs::msg::dds_::String_>.
-  //  Node        : farl
-  //  Process     : test_service__rmw_opensplice_cpp <23524>
-  //  Thread      : main thread 7fff7342d000
-  //  Internals   : V6.4.140407OSS///v_topicNew/v_topic.c/448/21/1455157023.781423000
+  const rosidl_service_type_support_t * ts = ROSIDL_GET_TYPE_SUPPORT(
+    example_interfaces, srv, AddTwoInts);
+
   const char * topic = "add_two_ints";
   rcl_client_options_t client_options = rcl_client_get_default_options();
   ret = rcl_client_init(&client, this->node_ptr, ts, topic, &client_options);

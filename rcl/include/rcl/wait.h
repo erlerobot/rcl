@@ -97,6 +97,8 @@ rcl_get_zero_initialized_wait_set(void);
  * \param[in] number_of_subscriptions non-zero size of the subscriptions set
  * \param[in] number_of_guard_conditions non-zero size of the guard conditions set
  * \param[in] number_of_timers non-zero size of the timers set
+ * \param[in] number_of_clients non-zero size of the clients set
+ * \param[in] number_of_services non-zero size of the services set
  * \param[in] allocator the allocator to use when allocating space in the sets
  * \return RCL_RET_OK if the wait set is initialized successfully, or
  *         RCL_RET_ALREADY_INIT if the wait set is not zero initialized, or
