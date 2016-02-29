@@ -17,19 +17,20 @@ extern "C"
 {
 #endif
 
+#include "rmw/rmw.h"
+
 #include "rcl/client.h"
 
 #include <string.h>
 
 #include "./common.h"
-#include "rmw/rmw.h"
+#include "./stdatomic_helper.h"
 
 typedef struct rcl_client_impl_t
 {
   rcl_client_options_t options;
   rmw_client_t * rmw_handle;
-  // TODO Atomic?
-  int64_t sequence_number;
+  atomic_int_least64_t sequence_number;
 } rcl_client_impl_t;
 
 rcl_client_t
@@ -161,14 +162,14 @@ rcl_send_request(const rcl_client_t * client, const void * ros_request)
   RCL_CHECK_ARGUMENT_FOR_NULL(ros_request, RCL_RET_INVALID_ARGUMENT);
   RCL_CHECK_FOR_NULL_WITH_MSG(
     client->impl, "client is invalid", return RCL_RET_INVALID_ARGUMENT);
+  int64_t sequence_number = rcl_atomic_load_int64_t(&client->impl->sequence_number);
   if (rmw_send_request(
-      client->impl->rmw_handle, ros_request, &(client->impl->sequence_number)) != RMW_RET_OK)
+      client->impl->rmw_handle, ros_request, &(sequence_number)) != RMW_RET_OK)
   {
-    printf("%s\n", rmw_get_error_string_safe());
     RCL_SET_ERROR_MSG(rmw_get_error_string_safe());
     return RCL_RET_ERROR;
   }
-  ++(client->impl->sequence_number);
+  rcl_atomic_exchange_int64_t(&client->impl->sequence_number, sequence_number++);
 
   return RCL_RET_OK;
 }

@@ -62,6 +62,14 @@ rcl_atomic_load_bool(atomic_bool * a_bool)
 }
 
 static inline uint64_t
+rcl_atomic_load_int64_t(atomic_int_least64_t * a_int64_t)
+{
+  int64_t result = 0;
+  rcl_atomic_load(a_int64_t, result);
+  return result;
+}
+
+static inline uint64_t
 rcl_atomic_load_uint64_t(atomic_uint_least64_t * a_uint64_t)
 {
   uint64_t result = 0;
@@ -91,6 +99,14 @@ rcl_atomic_exchange_bool(atomic_bool * a_bool, bool desired)
 {
   bool result;
   rcl_atomic_exchange(a_bool, result, desired);
+  return result;
+}
+
+static inline int64_t
+rcl_atomic_exchange_int64_t(atomic_int_least64_t * a_int64_t, int64_t desired)
+{
+  int64_t result;
+  rcl_atomic_exchange(a_int64_t, result, desired);
   return result;
 }
 
