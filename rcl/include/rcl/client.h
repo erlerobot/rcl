@@ -72,7 +72,7 @@ rcl_get_zero_initialized_client(void);
  * This object can be obtained using a language appropriate mechanism.
  * \TODO(wjwwood) probably should talk about this once and link to it instead
  * \TODO(jacquelinekay) reworded this for services with substitutions, should it refer to messages?
- * For C this macro can be used (using std_msgs/String as an example):
+ * For C this macro can be used (using example_interfaces/AddTwoInts as an example):
  *
  *    #include <rosidl_generator_c/service_type_support.h>
  *    #include <example_interfaces/srv/add_two_ints.h>
@@ -90,7 +90,7 @@ rcl_get_zero_initialized_client(void);
  * information used to send or take requests and responses.
  *
  * \TODO(wjwwood) update this once we've come up with an official scheme.
- * The topic name must be a non-empty string which follows the topic naming
+ * The service name must be a non-empty string which follows the topic/service naming
  * format.
  *
  * The options struct allows the user to set the quality of service settings as
@@ -107,22 +107,22 @@ rcl_get_zero_initialized_client(void);
  *    rcl_node_options_t node_ops = rcl_node_get_default_options();
  *    rcl_ret_t ret = rcl_node_init(&node, "node_name", &node_ops);
  *    // ... error handling
- *    rosidl_service_type_support_t * ts = ROSIDL_GET_MESSAGE_TYPE_SUPPORT(
+ *    rosidl_service_type_support_t * ts = ROSIDL_GET_SERVICE_TYPE_SUPPORT(
  *      example_interfaces, AddTwoInts);
  *    rcl_client_t client = rcl_get_zero_initialized_client();
  *    rcl_client_options_t client_ops = rcl_client_get_default_options();
- *    ret = rcl_client_init(&client, &node, ts, "chatter", &client_ops);
+ *    ret = rcl_client_init(&client, &node, ts, "add_two_ints", &client_ops);
  *    // ... error handling, and on shutdown do finalization:
  *    ret = rcl_client_fini(&client, &node);
  *    // ... error handling for rcl_client_fini()
  *    ret = rcl_node_fini(&node);
- *    // ... error handling for rcl_deinitialize_node()
+ *    // ... error handling for rcl_node_fini()
  *
  * This function is not thread-safe.
  *
  * \param[inout] client preallocated client structure
  * \param[in] node valid rcl node handle
- * \param[in] type_support type support object for the topic's type
+ * \param[in] type_support type support object for the service's type
  * \param[in] service_name the name of the service to request
  * \param[in] options client options, including quality of service settings
  * \return RCL_RET_OK if the client was initialized successfully, or
@@ -143,10 +143,8 @@ rcl_client_init(
   const rcl_client_options_t * options);
 
 /// Finalize a rcl_client_t.
-/* After calling, the node will no longer be advertising that it is publishing
- * on this topic (assuming this is the only client on this topic).
- *
- * After calling, calls to rcl_publish will fail when using this client.
+/*
+ * After calling, calls to rcl_send_request and rcl_take_response will fail when using this client.
  * However, the given node handle is still valid.
  *
  * This function is not thread-safe.
@@ -175,10 +173,10 @@ rcl_client_get_default_options(void);
  * Passing a different type to send_request produces undefined behavior and cannot
  * be checked by this function and therefore no deliberate error will occur.
  *
- * send_request is an non-blocking call. 
+ * send_request is an non-blocking call.
  *
  * The ROS request message given by the ros_request void pointer is always owned by the
- * calling code, but should remain constant during publish.
+ * calling code, but should remain constant during send_request.
  *
  * TODO: Is this true for send_request?
  * This function is thread safe so long as access to both the client and the
@@ -189,7 +187,7 @@ rcl_client_get_default_options(void);
  * is not allowed.
  * Before calling rcl_send_request the message can change and after calling
  * rcl_send_request the message can change, but it cannot be changed during the
- * publish call.
+ * send_request call.
  * The same ros_request, however, can be passed to multiple calls of
  * rcl_send_request simultaneously, even if the clients differ.
  * The ros_request is unmodified by rcl_send_request.
@@ -238,7 +236,7 @@ rcl_take_response(const rcl_client_t * client, void * request_header, void * ros
  *   - client is invalid (never called init, called fini, or invalid node)
  *
  * The returned string is only valid as long as the rcl_client_t is valid.
- * The value of the string may change if the topic name changes, and therefore
+ * The value of the string may change if the service name changes, and therefore
  * copying the string is recommended if this is a concern.
  *
  * This function is not thread-safe, and copying the result is not thread-safe.

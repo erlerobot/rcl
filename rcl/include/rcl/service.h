@@ -40,7 +40,8 @@ typedef struct rcl_service_options_t
 {
   /// Middleware quality of service settings for the service.
   rmw_qos_profile_t qos;
-  /// If true, messages published from within the same node are ignored.
+  // TODO: implement this if it should be implemented?
+  /// If true, requests from within the same node are ignored.
   bool ignore_local_publications;
   /// Custom allocator for the service, used for incidental allocations.
   /* For default behavior (malloc/free), see: rcl_get_default_allocator() */
@@ -72,7 +73,7 @@ rcl_get_zero_initialized_service(void);
  * This object can be obtained using a language appropriate mechanism.
  * \TODO(wjwwood) probably should talk about this once and link to it instead
  * \TODO(jacquelinekay) reworded this for services with substitutions, should it refer to messages?
- * For C this macro can be used (using std_msgs/String as an example):
+ * For C this macro can be used (using example_interfaces/AddTwoInts as an example):
  *
  *    #include <rosidl_generator_c/service_type_support.h>
  *    #include <example_interfaces/srv/add_two_ints.h>
@@ -90,7 +91,7 @@ rcl_get_zero_initialized_service(void);
  * information used to send or take requests and responses.
  *
  * \TODO(wjwwood) update this once we've come up with an official scheme.
- * The topic name must be a non-empty string which follows the topic naming
+ * The service name must be a non-empty string which follows the service/topic naming
  * format.
  *
  * The options struct allows the user to set the quality of service settings as
@@ -107,20 +108,20 @@ rcl_get_zero_initialized_service(void);
  *    rcl_node_options_t node_ops = rcl_node_get_default_options();
  *    rcl_ret_t ret = rcl_node_init(&node, "node_name", &node_ops);
  *    // ... error handling
- *    rosidl_service_type_support_t * ts = ROSIDL_GET_MESSAGE_TYPE_SUPPORT(
+ *    rosidl_service_type_support_t * ts = ROSIDL_GET_SERVICE_TYPE_SUPPORT(
  *      example_interfaces, AddTwoInts);
  *    rcl_service_t service = rcl_get_zero_initialized_service();
  *    rcl_service_options_t service_ops = rcl_service_get_default_options();
- *    ret = rcl_service_init(&service, &node, ts, "chatter", &service_ops);
+ *    ret = rcl_service_init(&service, &node, ts, "add_two_ints", &service_ops);
  *    // ... error handling, and on shutdown do finalization:
  *    ret = rcl_service_fini(&service, &node);
  *    // ... error handling for rcl_service_fini()
  *    ret = rcl_node_fini(&node);
- *    // ... error handling for rcl_deinitialize_node()
+ *    // ... error handling for rcl_node_fini()
  *
  * \param[out] service preallocated service structure
  * \param[in] node valid rcl node handle
- * \param[in] type_support type support object for the topic's type
+ * \param[in] type_support type support object for the service's type
  * \param[in] service_name the name of the service
  * \param[in] options service options, including quality of service settings
  * \return RCL_RET_OK if service was initialized successfully, or
@@ -139,10 +140,10 @@ rcl_service_init(
   const rcl_service_options_t * options);
 
 /// Deinitialize a rcl_service_t.
-/* After calling, the node will no longer be subscribed on this topic
- * (assuming this is the only service on this topic in this node).
+/* After calling, the node will no longer listen for requests for this service.
+ * (assuming this is the only service of this type in this node).
  *
- * After calling, calls to rcl_wait, rcl_take_request, and rcl_send_request will fail when using
+ * After calling, calls to rcl_wait, rcl_take_request, and rcl_send_response will fail when using
  * this service.
  * Additionally rcl_wait will be interrupted if currently blocking.
  * However, the given node handle is still valid.
@@ -214,13 +215,13 @@ rcl_take_request(
  * Passing a different type to send_response produces undefined behavior and cannot
  * be checked by this function and therefore no deliberate error will occur.
  *
- * send_response is an non-blocking call. 
+ * send_response is an non-blocking call.
  *
  * The ROS response message given by the ros_response void pointer is always owned by the
  * calling code, but should remain constant during send_response.
  *
  * TODO: Is this still true?
- * This function is thread safe so long as access to both the service and the
+ e This function is thread safe so long as access to both the service and the
  * ros_response is synchronized.
  * That means that calling rcl_send_response from multiple threads is allowed, but
  * calling rcl_send_response at the same time as non-thread safe service functions
@@ -234,6 +235,7 @@ rcl_take_request(
  * The ros_response is unmodified by rcl_send_response.
  *
  * \param[in] service handle to the service which will make the response
+ * \param[inout] response_header type-erased ptr to a response header
  * \param[in] ros_response type-erased pointer to the ROS response message
  * \return RCL_RET_OK if the response was sent successfully, or
  *         RCL_RET_INVALID_ARGUMENT if any arguments are invalid, or
@@ -245,7 +247,7 @@ RCL_WARN_UNUSED
 rcl_ret_t
 rcl_send_response(
   const rcl_service_t * service,
-  void * request_header,
+  void * response_header,
   void * ros_response);
 
 /// Get the topic name for the service.

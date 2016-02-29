@@ -114,7 +114,7 @@ rcl_get_zero_initialized_subscription(void);
  *    ret = rcl_subscription_fini(&subscription, &node);
  *    // ... error handling for rcl_subscription_fini()
  *    ret = rcl_node_fini(&node);
- *    // ... error handling for rcl_deinitialize_node()
+ *    // ... error handling for rcl_node_fini()
  *
  * This function is not thread-safe.
  *
