@@ -174,10 +174,10 @@ rcl_service_get_default_options(void);
  * Passing a different type to rcl_take produces undefined behavior and cannot
  * be checked by this function and therefore no deliberate error will occur.
  *
- * TODO(wjwwood) blocking of take?
- * TODO(wjwwood) pre-, during-, and post-conditions for message ownership?
- * TODO(wjwwood) is rcl_take thread-safe?
- * TODO(wjwwood) Should there be an rcl_message_info_t?
+ * TODO(jacquelinekay) blocking of take?
+ * TODO(jacquelinekay) pre-, during-, and post-conditions for message ownership?
+ * TODO(jacquelinekay) is rcl_take_request thread-safe?
+ * TODO(jacquelinekay) Should there be an rcl_request_id_t?
  *
  * The ros_request pointer should point to an already allocated ROS request message
  * struct of the correct type, into which the taken ROS request will be copied
@@ -192,7 +192,7 @@ rcl_service_get_default_options(void);
  * meta-information about the request (e.g. the sequence number).
  *
  * \param[in] service the handle to the service from which to take
- * \param[inout] request_header type-erased ptr to a request header
+ * \param[inout] request_header ptr to the struct holding metadata about the request ID
  * \param[inout] ros_request type-erased ptr to an allocated ROS request message
  * \return RCL_RET_OK if the request was taken, or
  *         RCL_RET_INVALID_ARGUMENT if any arugments are invalid, or
@@ -205,7 +205,7 @@ RCL_WARN_UNUSED
 rcl_ret_t
 rcl_take_request(
   const rcl_service_t * service,
-  void * request_header,
+  rmw_request_id_t * request_header,
   void * ros_request);
 
 /// Send a ROS response to a client using a service.
@@ -235,7 +235,7 @@ rcl_take_request(
  * The ros_response is unmodified by rcl_send_response.
  *
  * \param[in] service handle to the service which will make the response
- * \param[inout] response_header type-erased ptr to a response header
+ * \param[inout] response_header ptr to the struct holding metadata about the request ID
  * \param[in] ros_response type-erased pointer to the ROS response message
  * \return RCL_RET_OK if the response was sent successfully, or
  *         RCL_RET_INVALID_ARGUMENT if any arguments are invalid, or
@@ -247,7 +247,7 @@ RCL_WARN_UNUSED
 rcl_ret_t
 rcl_send_response(
   const rcl_service_t * service,
-  void * response_header,
+  rmw_request_id_t * response_header,
   void * ros_response);
 
 /// Get the topic name for the service.

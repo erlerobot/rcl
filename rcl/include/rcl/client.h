@@ -227,7 +227,10 @@ rcl_send_request(const rcl_client_t * client, const void * ros_request);
 RCL_PUBLIC
 RCL_WARN_UNUSED
 rcl_ret_t
-rcl_take_response(const rcl_client_t * client, void * request_header, void * ros_response);
+rcl_take_response(
+  const rcl_client_t * client,
+  rmw_request_id_t * request_header,
+  void * ros_response);
 
 /// Get the name of the service that this client will request a response from.
 /* This function returns the client's internal service name string.

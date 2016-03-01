@@ -151,7 +151,10 @@ rcl_service_get_rmw_handle(const rcl_service_t * service)
 }
 
 rcl_ret_t
-rcl_take_request(const rcl_service_t * service, void * request_header, void * ros_request)
+rcl_take_request(
+  const rcl_service_t * service,
+  rmw_request_id_t * request_header,
+  void * ros_request)
 {
   RCL_CHECK_ARGUMENT_FOR_NULL(service, RCL_RET_INVALID_ARGUMENT);
   RCL_CHECK_FOR_NULL_WITH_MSG(
@@ -174,7 +177,10 @@ rcl_take_request(const rcl_service_t * service, void * request_header, void * ro
 }
 
 rcl_ret_t
-rcl_send_response(const rcl_service_t * service, void * request_header, void * ros_response)
+rcl_send_response(
+  const rcl_service_t * service,
+  rmw_request_id_t * request_header,
+  void * ros_response)
 {
   RCL_CHECK_ARGUMENT_FOR_NULL(service, RCL_RET_INVALID_ARGUMENT);
   RCL_CHECK_FOR_NULL_WITH_MSG(
