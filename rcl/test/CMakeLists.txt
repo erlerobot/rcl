@@ -24,12 +24,6 @@ function(test_target_function)
     return()
   endif()
 
-  # TODO arrr
-  if("${rmw_implementation} " STREQUAL "rmw_connext_cpp ")
-    message(STATUS "Skipping tests for '${rmw_implementation}'")
-    return()
-  endif()
-
   message(STATUS "Creating tests for '${rmw_implementation}'")
 
   rcl_add_custom_gtest(test_allocator${target_suffix}
