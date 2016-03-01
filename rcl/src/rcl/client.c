@@ -17,11 +17,11 @@ extern "C"
 {
 #endif
 
-#include "rmw/rmw.h"
-
 #include "rcl/client.h"
 
 #include <string.h>
+
+#include "rmw/rmw.h"
 
 #include "./common.h"
 #include "./stdatomic_helper.h"
@@ -94,10 +94,10 @@ fail:
   return fail_ret;
 }
 
-// TODO remove node argument? will we want to store clients in nodes somehow?
 rcl_ret_t
 rcl_client_fini(rcl_client_t * client, rcl_node_t * node)
 {
+  (void)node;
   rcl_ret_t result = RCL_RET_OK;
   RCL_CHECK_ARGUMENT_FOR_NULL(client, RCL_RET_INVALID_ARGUMENT);
   RCL_CHECK_ARGUMENT_FOR_NULL(node, RCL_RET_INVALID_ARGUMENT);

@@ -40,9 +40,6 @@ typedef struct rcl_service_options_t
 {
   /// Middleware quality of service settings for the service.
   rmw_qos_profile_t qos;
-  // TODO: implement this if it should be implemented?
-  /// If true, requests from within the same node are ignored.
-  bool ignore_local_publications;
   /// Custom allocator for the service, used for incidental allocations.
   /* For default behavior (malloc/free), see: rcl_get_default_allocator() */
   rcl_allocator_t allocator;

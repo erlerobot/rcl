@@ -91,7 +91,6 @@ fail:
   return fail_ret;
 }
 
-// TODO remove node argument? will we want to store services in nodes somehow?
 rcl_ret_t
 rcl_service_fini(rcl_service_t * service, rcl_node_t * node)
 {
@@ -197,3 +196,9 @@ rcl_send_response(
 
   return RCL_RET_OK;
 }
+
+#if __cplusplus
+}
+#endif
+
+
