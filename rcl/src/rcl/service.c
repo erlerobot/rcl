@@ -200,5 +200,3 @@ rcl_send_response(
 #if __cplusplus
 }
 #endif
-
-
