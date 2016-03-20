@@ -27,6 +27,7 @@ extern "C"
 #include "rmw/rmw.h"
 
 #include "./common.h"
+#include <time.h>
 
 typedef struct rcl_node_impl_t
 {
@@ -56,6 +57,8 @@ rcl_get_zero_initialized_strings()
 rcl_ret_t
 rcl_get_node_names(rcl_strings_t* strings)
 {
+  struct timespec tstart={0,0}, tend={0,0};
+  clock_gettime(CLOCK_MONOTONIC, &tstart);
 
   RCL_CHECK_ARGUMENT_FOR_NULL(strings, RCL_RET_INVALID_ARGUMENT);
 
@@ -66,13 +69,30 @@ rcl_get_node_names(rcl_strings_t* strings)
     strings->allocator.deallocate,
     "invalid allocator, deallocate not set", return RCL_RET_INVALID_ARGUMENT);
 
+
+  clock_gettime(CLOCK_MONOTONIC, &tend);
+  printf("(rcl) -----> check_args:  %.5f \n",
+           ((double)tend.tv_sec + 1.0e-9*tend.tv_nsec) - 
+           ((double)tstart.tv_sec + 1.0e-9*tstart.tv_nsec));
+
   rmw_ros_meta_t* ros_meta_data = rmw_get_node_names();
+
+  clock_gettime(CLOCK_MONOTONIC, &tend);
+  printf("(rcl) -----> rmw_get_node_names: %.5f \n",
+           ((double)tend.tv_sec + 1.0e-9*tend.tv_nsec) - 
+           ((double)tstart.tv_sec + 1.0e-9*tstart.tv_nsec));
 
   strings->count = ros_meta_data->count;
   strings->data = (char **)strings->allocator.allocate(sizeof(char *) * strings->count, strings->allocator.state);
   RCL_CHECK_FOR_NULL_WITH_MSG(strings->data, "allocating memory failed", return RCL_RET_BAD_ALLOC);
 
   memset(strings->data, 0, sizeof(char **) * strings->count);
+  
+  clock_gettime(CLOCK_MONOTONIC, &tend);
+  printf("(rcl) -----> allocation and init: %.5f \n",
+           ((double)tend.tv_sec + 1.0e-9*tend.tv_nsec) - 
+           ((double)tstart.tv_sec + 1.0e-9*tstart.tv_nsec));
+
   int i;
   //copy the node names to the structure
   for(i = 0; i < ros_meta_data->count; i++){
@@ -83,7 +103,18 @@ rcl_get_node_names(rcl_strings_t* strings)
     memcpy(strings->data[i], ros_meta_data->node_names[i].data, len_string);
   }
 
+  clock_gettime(CLOCK_MONOTONIC, &tend);
+  printf("(rcl) -----> filled the structures: %.5f \n",
+           ((double)tend.tv_sec + 1.0e-9*tend.tv_nsec) - 
+           ((double)tstart.tv_sec + 1.0e-9*tstart.tv_nsec));
+
+
   rmw_destroy_ros_meta(ros_meta_data);
+
+  clock_gettime(CLOCK_MONOTONIC, &tend);
+  printf("(rcl) -----> destroy: %.5f \n",
+           ((double)tend.tv_sec + 1.0e-9*tend.tv_nsec) - 
+           ((double)tstart.tv_sec + 1.0e-9*tstart.tv_nsec));
 
   return RCL_RET_OK;
 }
