@@ -112,7 +112,7 @@ rcl_subscription_get_default_options()
     .ignore_local_publications = false,
   };
   // Must set the allocator and qos after because they are not a compile time constant.
-  default_options.qos = rmw_qos_profile_default;
+  default_options.qos = rmw_qos_profile_sensor_data;
   default_options.allocator = rcl_get_default_allocator();
   return default_options;
 }
